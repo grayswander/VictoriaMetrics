@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/VictoriaMetrics/VictoriaMetrics/lib/resolution"
 	"io"
 	"net/http"
 	"sync"
@@ -193,7 +194,7 @@ func (uw *unmarshalWork) Unmarshal() {
 	}
 
 	// Trim timestamps if required.
-	if tsTrim := trimTimestamp.Milliseconds(); tsTrim > 1 {
+	if tsTrim := resolution.GetResolution().GetTrimDuration(*trimTimestamp); tsTrim > 1 {
 		for i := range rows {
 			row := &rows[i]
 			row.Timestamp -= row.Timestamp % tsTrim

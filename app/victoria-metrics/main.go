@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/VictoriaMetrics/VictoriaMetrics/lib/resolution"
 	"net/http"
 	"os"
 	"time"
@@ -39,6 +40,10 @@ var (
 		"The saved data survives unclean shutdowns such as OOM crash, hardware reset, SIGKILL, etc. "+
 		"Bigger intervals may help increase the lifetime of flash storage with limited write cycles (e.g. Raspberry PI). "+
 		"Smaller intervals increase disk IO load. Minimum supported value is 1s")
+
+	timeseriesResolution = flag.String("timeseriesResolution", "ms", "The resolution for all the time series. Possible values: "+
+		"ns - nanoseconds ms - milliseconds. "+
+		"See https://docs.victoriametrics.com/#how-to-reduce-disk-space-usage for details")
 )
 
 func main() {
@@ -48,6 +53,16 @@ func main() {
 	envflag.Parse()
 	buildinfo.Init()
 	logger.Init()
+
+	switch *timeseriesResolution {
+	case "ns":
+		resolution.SetResolutionToNanoseconds()
+	case "ms":
+		resolution.SetResolutionToMilliseconds()
+	default:
+		logger.Fatalf("unexpected -timeseriesResolution; expecting `ns` or `ms`; got %q", *timeseriesResolution)
+	}
+
 	pushmetrics.Init()
 
 	if promscrape.IsDryRun() {
